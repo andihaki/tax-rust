@@ -6,4 +6,8 @@ https://www.online-pajak.com/seputar-pph21/cara-menghitung-pajak-penghasilan/
 
 basicnya FE ReactJS, jadi menyelami Rust yang lebih deket ke FE pake ratatui kalo kata gemini
 
-[Actix atau Ratatui](./actix-vs-ratatui.png)
+![Actix atau Ratatui](./actix-vs-ratatui.png)
+
+# hasil
+
+![Hasil](./hasil.png)
