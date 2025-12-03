@@ -1,17 +1,17 @@
+mod constants;
+
 use std::io::{self, stdout};
 use std::num::IntErrorKind;
 use std::time::{Duration, Instant};
 
-// Import event-related items and raw mode functions directly from crossterm
+use constants::*;
+
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
 use ratatui::text::ToText;
-// Import ratatui components, and crucially, the 'execute' macro and
-// the terminal commands (EnterAlternateScreen, LeaveAlternateScreen)
-// via ratatui's re-export to satisfy the trait bounds.
 use ratatui::{
     Frame, Terminal,
     backend::CrosstermBackend,
@@ -24,28 +24,6 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
-
-// Type alias for the terminal backend
-type TuiTerminal = Terminal<CrosstermBackend<io::Stdout>>;
-
-// --- CONSTANTS FOR TAX CALCULATION ---
-
-// Define the upper limits (in RP) for each tax bracket
-const BRACKET_1_LIMIT: u64 = 50_000_000;
-const BRACKET_2_LIMIT: u64 = 250_000_000;
-const BRACKET_3_LIMIT: u64 = 500_000_000;
-const BRACKET_4_LIMIT: u64 = 5_000_000_000;
-
-// Define the tax rates for each bracket
-const RATE_1: f64 = 0.05; // 5%
-const RATE_2: f64 = 0.15; // 15%
-const RATE_3: f64 = 0.25; // 25%
-const RATE_4: f64 = 0.30; // 30%
-const RATE_5: f64 = 0.35; // 35%
-
-const MAX_INPUT_LENGTH: usize = 18;
-
-// --- APPLICATION STATE ---
 
 #[derive(Default)]
 struct App {
@@ -284,7 +262,11 @@ fn ui(frame: &mut Frame, app: &App) {
 }
 
 /// Main application event loop
-fn run_app(terminal: &mut TuiTerminal, mut app: App, tick_rate: Duration) -> io::Result<()> {
+fn run_app(
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    mut app: App,
+    tick_rate: Duration,
+) -> io::Result<()> {
     let mut last_tick = Instant::now();
     let mut should_run = true;
 
