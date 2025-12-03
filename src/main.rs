@@ -1,13 +1,13 @@
+mod app;
 mod constants;
 
+use app::App;
+
 use std::io::{self, stdout};
-use std::num::IntErrorKind;
 use std::time::{Duration, Instant};
 
-use constants::*;
-
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
@@ -24,132 +24,6 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
-
-#[derive(Default)]
-struct App {
-    input: String,
-    monthly_pkp: u64,
-    annual_pkp: u64,
-    annual_tax_due: f64,
-    tax_bracket_info: String,
-}
-
-impl App {
-    fn new() -> App {
-        App {
-            tax_bracket_info: "".to_string(),
-            ..Default::default()
-        }
-    }
-
-    /// Handles the logic for calculating tax and updating the state.
-    fn calculate_tax(&mut self) {
-        // Attempt to parse the input string into a u64
-        match self.input.parse::<u64>() {
-            Ok(monthly_income) => {
-                self.monthly_pkp = monthly_income;
-                // Note: The annual_pkp calculation (monthly_income * 12) can also overflow u64,
-                // but by limiting the input length to 18 digits, we ensure the product
-                // will remain within the u64 range (max monthly input ~ 1.5e18, max u64 ~ 18.4e18)
-                self.annual_pkp = monthly_income.saturating_mul(12);
-
-                let income = self.annual_pkp;
-                let rate: f64;
-                let bracket_desc: &str;
-
-                // Determine the highest applicable bracket (Single-Tier Lookup)
-                if income == 0 {
-                    rate = 0.0;
-                    bracket_desc = "Tidak ada penghasilan kena pajak";
-                } else if income <= BRACKET_1_LIMIT {
-                    rate = RATE_1;
-                    bracket_desc = "Golongan 1 (0 - 50 juta rupiah)";
-                } else if income <= BRACKET_2_LIMIT {
-                    rate = RATE_2;
-                    bracket_desc = "Golongan 2 (50 - 250 juta rupiah)";
-                } else if income <= BRACKET_3_LIMIT {
-                    rate = RATE_3;
-                    bracket_desc = "Golongan 3 (250 - 500 juta rupiah)";
-                } else if income <= BRACKET_4_LIMIT {
-                    rate = RATE_4;
-                    bracket_desc = "Golongan Nyuyok (500 juta - 5 miliar rupiah)";
-                } else {
-                    rate = RATE_5;
-                    bracket_desc = "Golongan Sultan (> 5 miliar rupiah)";
-                }
-
-                self.annual_tax_due = (income as f64) * rate;
-
-                let rate_percentage = format!("{}%", rate * 100.0);
-                // Update the display information
-                self.tax_bracket_info = format!(
-                    "Penghasilan masuk {} dengan pajak {}.",
-                    bracket_desc, rate_percentage
-                );
-            }
-            Err(e) => {
-                self.annual_pkp = 0;
-                self.monthly_pkp = 0;
-                self.annual_tax_due = 0.0;
-
-                // Check if the error is specifically due to a positive overflow
-                if matches!(*e.kind(), IntErrorKind::PosOverflow) {
-                    self.tax_bracket_info = "Error: Error: Nilai input terlalu besar.".to_string();
-                } else {
-                    // General parsing error (e.g., non-digit if not caught by handle_event)
-                    self.tax_bracket_info = "Error: format angka tidak valid.".to_string();
-                }
-            }
-        }
-    }
-
-    fn handle_event(&mut self, event: &Event) -> bool {
-        let Event::Key(key) = event else {
-            return true;
-        };
-
-        if key.kind != KeyEventKind::Press {
-            return true;
-        }
-
-        match key.code {
-            KeyCode::Char('q') | KeyCode::Esc => false,
-            KeyCode::Enter => {
-                self.calculate_tax();
-                true
-            }
-            KeyCode::Backspace => {
-                self.input.pop();
-                true
-            }
-            KeyCode::Char(c) if c.is_ascii_digit() => {
-                self.handle_digit_input(c);
-                true
-            }
-            _ => true,
-        }
-    }
-
-    fn handle_digit_input(&mut self, c: char) {
-        if self.input.len() < MAX_INPUT_LENGTH {
-            self.input.push(c);
-        } else {
-            self.tax_bracket_info = format!("Input diblokir: Maksimal {} digit.", MAX_INPUT_LENGTH);
-        }
-    }
-
-    /// Helper function to format the u64 amount into a string with thousands separators.
-    fn format_income(&self, amount: u64) -> String {
-        amount
-            .to_string()
-            .as_bytes()
-            .rchunks(3)
-            .rev()
-            .map(|chunk| String::from_utf8(chunk.to_vec()).unwrap())
-            .collect::<Vec<String>>()
-            .join(".")
-    }
-}
 
 // --- TUI DRAWING ---
 
@@ -213,14 +87,14 @@ fn ui(frame: &mut Frame, app: &App) {
         Line::from(vec![
             Span::styled("Bulanan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                app.format_income(app.monthly_pkp),
+                app.format_income_thousand_separator(app.monthly_income),
                 Style::default().fg(Color::LightYellow),
             ),
         ]),
         Line::from(vec![
             Span::styled("Tahunan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                app.format_income(app.annual_pkp),
+                app.format_income_thousand_separator(app.annual_income),
                 Style::default().fg(Color::LightYellow),
             ),
         ]),
@@ -242,7 +116,10 @@ fn ui(frame: &mut Frame, app: &App) {
                 Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
-                format!("RP {}", app.format_income(tax_amount_u64)),
+                format!(
+                    "RP {}",
+                    app.format_income_thousand_separator(tax_amount_u64)
+                ),
                 Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
