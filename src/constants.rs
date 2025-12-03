@@ -8,6 +8,3 @@ pub const RATE_2: f64 = 0.15;
 pub const RATE_3: f64 = 0.25;
 pub const RATE_4: f64 = 0.30;
 pub const RATE_5: f64 = 0.35;
-
-// monthly_income u64. (monthly_income * 12) can also overflow u64
-pub const MAX_INPUT_LENGTH: usize = 18;
