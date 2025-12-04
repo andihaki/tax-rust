@@ -2,7 +2,6 @@ use crossterm::event::{Event, KeyCode, KeyEventKind};
 use std::{num::IntErrorKind, string::FromUtf8Error};
 
 use crate::constants::*;
-
 #[derive(Default)]
 pub struct App {
     pub input: String,
@@ -53,16 +52,17 @@ impl App {
     }
 
     fn get_tax_bracket(income: u64) -> (f64, &'static str) {
-        match income {
-            0 => (0.0, "Tyduck kena pajak"),
-            _ if income <= BRACKET_1_LIMIT => (RATE_1, "Golongan 1 (0 - 50 juta rupiah)"),
-            _ if income <= BRACKET_2_LIMIT => (RATE_2, "Golongan 2 (50 - 250 juta rupiah)"),
-            _ if income <= BRACKET_3_LIMIT => (RATE_3, "Golongan 3 (250 - 500 juta rupiah)"),
-            _ if income <= BRACKET_4_LIMIT => {
-                (RATE_4, "Golongan Gajhi Nyuyok (500 juta - 5 miliar rupiah)")
-            }
-            _ => (RATE_5, "Golongan Sultan (> 5 miliar rupiah)"),
+        if income == 0 {
+            return (0.0, "Tyduck kena pajak");
         }
+
+        for bracket in TAX_BRACKETS {
+            if income <= bracket.limit {
+                return (bracket.rate, bracket.description);
+            }
+        }
+
+        (0.0, "Error: error ape ni?")
     }
 
     pub fn handle_event(&mut self, event: &Event) -> bool {
