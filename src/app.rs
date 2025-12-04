@@ -1,5 +1,5 @@
 use crossterm::event::{Event, KeyCode, KeyEventKind};
-use std::num::IntErrorKind;
+use std::{num::IntErrorKind, string::FromUtf8Error};
 
 use crate::constants::*;
 
@@ -32,7 +32,6 @@ impl App {
                 self.annual_tax_due = (income as f64) * rate;
 
                 let rate_percentage = format!("{}%", rate * 100.0);
-                // Update the display information
                 self.tax_bracket_info = format!(
                     "Penghasilan termasuk {} dengan pajak {}.",
                     bracket_desc, rate_percentage
@@ -46,6 +45,7 @@ impl App {
                 if matches!(*e.kind(), IntErrorKind::PosOverflow) {
                     self.tax_bracket_info = "Error: Gaji boss satu ni diluar nurul.".to_string();
                 } else {
+                    // seems should never called because guarded by if c.is_ascii_digit()
                     self.tax_bracket_info = "Error: hmmmm.".to_string();
                 }
             }
@@ -92,14 +92,15 @@ impl App {
         }
     }
 
-    pub fn format_income_thousand_separator(&self, amount: u64) -> String {
-        amount
+    pub fn format_thousand_separator(&self, amount: u64) -> Result<String, FromUtf8Error> {
+        let components: Result<Vec<String>, FromUtf8Error> = amount
             .to_string()
             .as_bytes()
             .rchunks(3)
             .rev()
-            .map(|chunk| String::from_utf8(chunk.to_vec()).unwrap())
-            .collect::<Vec<String>>()
-            .join(".")
+            .map(|chunk| Ok(String::from_utf8(chunk.to_vec())?))
+            .collect();
+
+        Ok(components?.join("."))
     }
 }

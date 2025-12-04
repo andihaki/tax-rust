@@ -87,14 +87,16 @@ fn ui(frame: &mut Frame, app: &App) {
         Line::from(vec![
             Span::styled("Bulanan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                app.format_income_thousand_separator(app.monthly_income),
+                app.format_thousand_separator(app.monthly_income)
+                    .unwrap_or_default(),
                 Style::default().fg(Color::LightYellow),
             ),
         ]),
         Line::from(vec![
             Span::styled("Tahunan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                app.format_income_thousand_separator(app.annual_income),
+                app.format_thousand_separator(app.annual_income)
+                    .unwrap_or_default(),
                 Style::default().fg(Color::LightYellow),
             ),
         ]),
@@ -118,7 +120,8 @@ fn ui(frame: &mut Frame, app: &App) {
             Span::styled(
                 format!(
                     "RP {}",
-                    app.format_income_thousand_separator(tax_amount_u64)
+                    app.format_thousand_separator(tax_amount_u64)
+                        .unwrap_or_default()
                 ),
                 Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
             ),
