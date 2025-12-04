@@ -23,6 +23,7 @@ impl App {
         match self.input.parse::<u64>() {
             Ok(monthly_income) => {
                 self.monthly_income = monthly_income;
+                // @todo: crashed when input > 18 and < 20. ex: 9999999999999999999
                 self.annual_income = monthly_income * 12;
 
                 let income = self.annual_income;
@@ -85,7 +86,12 @@ impl App {
                 true
             }
             KeyCode::Char(c) if c.is_ascii_digit() => {
-                self.input.push(c);
+                if self.input.len() < MAX_INPUT_LENGTH {
+                    self.input.push(c);
+                } else {
+                    self.tax_bracket_info =
+                        format!("Gaji anda diluar nurul. {} digit", MAX_INPUT_LENGTH)
+                }
                 true
             }
             _ => true,
