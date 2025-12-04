@@ -88,6 +88,7 @@ fn ui(frame: &mut Frame, app: &App) {
             Span::styled("Bulanan: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 app.format_thousand_separator(app.monthly_income)
+                    // @todo: masih gatel, repetitif
                     .unwrap_or_default(),
                 Style::default().fg(Color::LightYellow),
             ),
@@ -96,6 +97,7 @@ fn ui(frame: &mut Frame, app: &App) {
             Span::styled("Tahunan: ", Style::default().fg(Color::Gray)),
             Span::styled(
                 app.format_thousand_separator(app.annual_income)
+                    // @todo: masih gatel, repetitif
                     .unwrap_or_default(),
                 Style::default().fg(Color::LightYellow),
             ),
@@ -121,6 +123,7 @@ fn ui(frame: &mut Frame, app: &App) {
                 format!(
                     "RP {}",
                     app.format_thousand_separator(tax_amount_u64)
+                        // @todo: masih gatel, repetitif
                         .unwrap_or_default()
                 ),
                 Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
