@@ -1,5 +1,11 @@
+use std::io::{self};
+use std::time::{Duration, Instant};
+
+use crossterm::event::{self};
+
 use ratatui::{
-    Frame,
+    Frame, Terminal,
+    backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span, ToText},
@@ -115,4 +121,32 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     let results_paragraph = Paragraph::new(results_text).block(results_block);
     frame.render_widget(results_paragraph, main_layout[2]);
+}
+
+pub fn run_app(
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    mut app: App,
+    tick_rate: Duration,
+) -> io::Result<()> {
+    let mut last_tick = Instant::now();
+    let mut should_run = true;
+
+    while should_run {
+        // Draw the UI
+        terminal.draw(|f| draw(f, &app))?;
+
+        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
+
+        // Handle Events
+        if event::poll(timeout)? {
+            let event = event::read()?;
+            should_run = app.handle_event(&event);
+        }
+
+        if last_tick.elapsed() >= tick_rate {
+            last_tick = Instant::now();
+        }
+    }
+
+    Ok(())
 }

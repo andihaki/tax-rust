@@ -3,15 +3,13 @@ mod constants;
 mod ui;
 
 use app::App;
-use ui::draw;
 
 use std::io::{self, stdout};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use crossterm::{
-    event::{self},
-    terminal::{disable_raw_mode, enable_raw_mode},
-};
+use crate::ui::run_app;
+
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 use ratatui::{
     Terminal,
@@ -21,37 +19,6 @@ use ratatui::{
         terminal::{EnterAlternateScreen, LeaveAlternateScreen},
     },
 };
-
-/// Main application event loop
-fn run_app(
-    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    mut app: App,
-    tick_rate: Duration,
-) -> io::Result<()> {
-    let mut last_tick = Instant::now();
-    let mut should_run = true;
-
-    while should_run {
-        // Draw the UI
-        terminal.draw(|f| draw(f, &app))?;
-
-        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
-
-        // Handle Events
-        if event::poll(timeout)? {
-            let event = event::read()?;
-            should_run = app.handle_event(&event);
-        }
-
-        if last_tick.elapsed() >= tick_rate {
-            last_tick = Instant::now();
-        }
-    }
-
-    Ok(())
-}
-
-// --- MAIN EXECUTION ---
 
 fn main() -> io::Result<()> {
     // 1. Setup terminal
