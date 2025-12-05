@@ -1,11 +1,18 @@
-use std::io::{self};
+use std::io::{self, stdout};
 use std::time::{Duration, Instant};
 
-use crossterm::event::{self};
+use crossterm::{
+    event::{self},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 
 use ratatui::{
     Frame, Terminal,
     backend::CrosstermBackend,
+    crossterm::{
+        execute,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen},
+    },
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span, ToText},
@@ -13,6 +20,20 @@ use ratatui::{
 };
 
 use crate::app::App;
+
+pub fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
+    enable_raw_mode()?;
+    let mut stdout = stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let terminal = Terminal::new(CrosstermBackend::new(stdout))?;
+    Ok(terminal)
+}
+
+pub fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    terminal.show_cursor()
+}
 
 pub fn draw(frame: &mut Frame, app: &App) {
     let main_layout = Layout::default()
@@ -126,7 +147,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
 pub fn run_app(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     mut app: App,
-    tick_rate: Duration,
+    tick_duration: Duration,
 ) -> io::Result<()> {
     let mut last_tick = Instant::now();
     let mut should_run = true;
@@ -135,7 +156,7 @@ pub fn run_app(
         // Draw the UI
         terminal.draw(|f| draw(f, &app))?;
 
-        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
+        let timeout = tick_duration.saturating_sub(last_tick.elapsed());
 
         // Handle Events
         if event::poll(timeout)? {
@@ -143,7 +164,7 @@ pub fn run_app(
             should_run = app.handle_event(&event);
         }
 
-        if last_tick.elapsed() >= tick_rate {
+        if last_tick.elapsed() >= tick_duration {
             last_tick = Instant::now();
         }
     }
