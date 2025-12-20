@@ -6,7 +6,6 @@ use crossterm::{
     event::{self},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-
 use ratatui::{
     Frame, Terminal,
     backend::CrosstermBackend,
@@ -21,7 +20,8 @@ use ratatui::{
 };
 
 use tax_core::App;
-use tax_core::constants::MAX_INPUT_LENGTH;
+
+use crate::constants::MAX_INPUT_LENGTH;
 
 pub fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;

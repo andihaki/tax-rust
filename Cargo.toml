@@ -7,7 +7,7 @@ members = [
 ]
 
 [package]
-name = "tax_rust"
+name = "tax-rust"
 version = "0.1.0"
 edition = "2024"
 

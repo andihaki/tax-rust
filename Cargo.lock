@@ -536,16 +536,16 @@ name = "tax-core"
 version = "0.1.0"
 
 [[package]]
-name = "tax-web"
-version = "0.1.0"
-
-[[package]]
-name = "tax_rust"
+name = "tax-rust"
 version = "0.1.0"
 dependencies = [
  "tax-cli",
  "tax-core",
 ]
+
+[[package]]
+name = "tax-web"
+version = "0.1.0"
 
 [[package]]
 name = "unicode-ident"
