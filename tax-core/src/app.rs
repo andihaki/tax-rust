@@ -1,7 +1,7 @@
-use crossterm::event::{Event, KeyCode, KeyEventKind};
 use std::{num::IntErrorKind, string::FromUtf8Error};
 
 use crate::constants::*;
+
 #[derive(Default)]
 pub struct App {
     pub input: String,
@@ -19,7 +19,7 @@ impl App {
         }
     }
 
-    fn calculate_tax(&mut self) {
+    pub fn calculate_tax(&mut self) {
         match self.input.parse::<u64>() {
             Ok(monthly_income) => {
                 self.monthly_income = monthly_income;
@@ -64,38 +64,6 @@ impl App {
         }
 
         (0.0, "Error: error ape ni?")
-    }
-
-    pub fn handle_event(&mut self, event: &Event) -> bool {
-        let Event::Key(key) = event else {
-            return true;
-        };
-
-        if key.kind != KeyEventKind::Press {
-            return true;
-        }
-
-        match key.code {
-            KeyCode::Char('q') | KeyCode::Esc => false,
-            KeyCode::Enter => {
-                self.calculate_tax();
-                true
-            }
-            KeyCode::Backspace => {
-                self.input.pop();
-                true
-            }
-            KeyCode::Char(c) if c.is_ascii_digit() => {
-                if self.input.len() < MAX_INPUT_LENGTH {
-                    self.input.push(c);
-                } else {
-                    self.tax_bracket_info =
-                        format!("Gaji anda diluar nurul. {} digit", MAX_INPUT_LENGTH)
-                }
-                true
-            }
-            _ => true,
-        }
     }
 
     pub fn format_thousand_separator(&self, amount: u64) -> Result<String, FromUtf8Error> {

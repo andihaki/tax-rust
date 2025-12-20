@@ -1,6 +1,7 @@
 use std::io::{self, stdout};
 use std::time::{Duration, Instant};
 
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use crossterm::{
     event::{self},
     terminal::{disable_raw_mode, enable_raw_mode},
@@ -20,6 +21,7 @@ use ratatui::{
 };
 
 use tax_core::App;
+use tax_core::constants::MAX_INPUT_LENGTH;
 
 pub fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
@@ -161,7 +163,7 @@ pub fn run_app(
         // Handle Events
         if event::poll(timeout)? {
             let event = event::read()?;
-            should_run = app.handle_event(&event);
+            should_run = handle_event(&mut app, &event);
         }
 
         if last_tick.elapsed() >= tick_duration {
@@ -170,4 +172,35 @@ pub fn run_app(
     }
 
     Ok(())
+}
+
+pub fn handle_event(app: &mut App, event: &Event) -> bool {
+    let Event::Key(key) = event else {
+        return true;
+    };
+
+    if key.kind != KeyEventKind::Press {
+        return true;
+    }
+
+    match key.code {
+        KeyCode::Char('q') | KeyCode::Esc => false,
+        KeyCode::Enter => {
+            app.calculate_tax();
+            true
+        }
+        KeyCode::Backspace => {
+            app.input.pop();
+            true
+        }
+        KeyCode::Char(c) if c.is_ascii_digit() => {
+            if app.input.len() < MAX_INPUT_LENGTH {
+                app.input.push(c);
+            } else {
+                app.tax_bracket_info = format!("Gaji anda diluar nurul. {} digit", MAX_INPUT_LENGTH)
+            }
+            true
+        }
+        _ => true,
+    }
 }
