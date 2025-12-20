@@ -1,13 +1,8 @@
-mod app;
-mod constants;
-mod ui;
-
-use app::App;
-
 use std::io;
 use std::time::Duration;
 
-use crate::ui::{restore_terminal, run_app, setup_terminal};
+use tax_cli::{restore_terminal, run_app, setup_terminal};
+use tax_core::App;
 
 fn main() -> io::Result<()> {
     let mut terminal = setup_terminal()?;

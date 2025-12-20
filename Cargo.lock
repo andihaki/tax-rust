@@ -523,11 +523,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "tax_rust"
+name = "tax-cli"
 version = "0.1.0"
 dependencies = [
  "crossterm 0.29.0",
  "ratatui",
+ "tax-core",
+]
+
+[[package]]
+name = "tax-core"
+version = "0.1.0"
+dependencies = [
+ "crossterm 0.29.0",
+]
+
+[[package]]
+name = "tax-web"
+version = "0.1.0"
+
+[[package]]
+name = "tax_rust"
+version = "0.1.0"
+dependencies = [
+ "tax-cli",
+ "tax-core",
 ]
 
 [[package]]

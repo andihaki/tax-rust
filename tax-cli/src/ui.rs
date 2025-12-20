@@ -19,7 +19,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
-use crate::app::App;
+use tax_core::App;
 
 pub fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
