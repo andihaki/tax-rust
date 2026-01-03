@@ -1,8 +1,16 @@
+[workspace]
+resolver = "2"
+members = [
+    "tax-web",
+    "tax-cli",
+    "tax-core"
+]
+
 [package]
-name = "tax_rust"
+name = "tax-rust"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-crossterm = "0.29.0"
-ratatui = "0.29.0"
+tax-cli = { version = "0.1.0", path = "tax-cli" }
+tax-core = { version = "0.1.0", path = "tax-core" }

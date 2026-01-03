@@ -1,5 +1,3 @@
-pub const MAX_INPUT_LENGTH: usize = 18;
-
 pub const BRACKET_1_LIMIT: u64 = 50_000_000;
 pub const BRACKET_2_LIMIT: u64 = 250_000_000;
 pub const BRACKET_3_LIMIT: u64 = 500_000_000;
