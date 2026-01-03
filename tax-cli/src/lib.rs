@@ -25,21 +25,63 @@ use tax_core::App;
 
 use crate::constants::MAX_INPUT_LENGTH;
 
-pub fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
+fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
     let mut stdout = stdout();
     execute!(stdout, EnterAlternateScreen)?;
     let terminal = Terminal::new(CrosstermBackend::new(stdout))?;
     Ok(terminal)
 }
+pub struct Tui {
+    terminal: Terminal<CrosstermBackend<io::Stdout>>,
+    pub tick_rate: Duration,
+}
 
-pub fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
+impl Tui {
+    pub fn new(tick_rate: Duration) -> io::Result<Self> {
+        let terminal = setup_terminal()?;
+        Ok(Self {
+            terminal,
+            tick_rate,
+        })
+    }
+
+    pub fn run(&mut self, mut app: App) -> io::Result<()> {
+        let mut last_tick = Instant::now();
+        let mut should_run = true;
+
+        while should_run {
+            self.terminal.draw(|f| draw(f, &app))?;
+
+            let timeout = self.tick_rate.saturating_sub(last_tick.elapsed());
+
+            if event::poll(timeout)? {
+                let event = event::read()?;
+                should_run = handle_event(&mut app, &event);
+            }
+
+            if last_tick.elapsed() >= self.tick_rate {
+                last_tick = Instant::now();
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl Drop for Tui {
+    fn drop(&mut self) {
+        let _ = restore_terminal(&mut self.terminal);
+    }
+}
+
+fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()
 }
 
-pub fn draw(frame: &mut Frame, app: &App) {
+fn draw(frame: &mut Frame, app: &App) {
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -76,10 +118,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         .title("Hasil perhitungan")
         .style(Style::default().fg(Color::White));
 
-    let tax_due_formatted = format!("{:.2}", app.annual_tax_due);
-    let tax_integer_part = tax_due_formatted.split('.').next().unwrap_or("0");
-    let tax_decimal_part = tax_due_formatted.split('.').nth(1).unwrap_or("00");
-    let tax_amount_u64 = tax_integer_part.parse::<u64>().unwrap_or(0);
+    let tax_parts = TaxBreakdown::from(app.annual_tax_due);
 
     let results_text = vec![
         Line::from(Span::styled(
@@ -91,18 +130,24 @@ pub fn draw(frame: &mut Frame, app: &App) {
         Line::from(vec![
             Span::styled("Bulanan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                app.format_thousand_separator(app.monthly_income)
-                    // @todo: masih gatel, repetitif
-                    .unwrap_or_default(),
+                // IncomeDisplay {
+                //     app,
+                //     value: app.monthly_income,
+                // }
+                // .to_string(),
+                app.format_thousand_separator(app.monthly_income),
                 Style::default().fg(Color::LightYellow),
             ),
         ]),
         Line::from(vec![
             Span::styled("Tahunan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                app.format_thousand_separator(app.annual_income)
-                    // @todo: masih gatel, repetitif
-                    .unwrap_or_default(),
+                // IncomeDisplay {
+                //     app,
+                //     value: app.annual_income,
+                // }
+                // .to_string(),
+                app.format_thousand_separator(app.annual_income),
                 Style::default().fg(Color::LightYellow),
             ),
         ]),
@@ -124,16 +169,11 @@ pub fn draw(frame: &mut Frame, app: &App) {
                 Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
-                format!(
-                    "RP {}",
-                    app.format_thousand_separator(tax_amount_u64)
-                        // @todo: masih gatel, repetitif
-                        .unwrap_or_default()
-                ),
+                format!("RP {}", app.format_thousand_separator(tax_parts.integer)),
                 Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
-                format!(".{}", tax_decimal_part),
+                format!(".{}", tax_parts.decimal),
                 Style::default().fg(Color::Red),
             ),
         ]),
@@ -148,35 +188,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     frame.render_widget(results_paragraph, main_layout[2]);
 }
 
-pub fn run_app(
-    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    mut app: App,
-    tick_duration: Duration,
-) -> io::Result<()> {
-    let mut last_tick = Instant::now();
-    let mut should_run = true;
-
-    while should_run {
-        // Draw the UI
-        terminal.draw(|f| draw(f, &app))?;
-
-        let timeout = tick_duration.saturating_sub(last_tick.elapsed());
-
-        // Handle Events
-        if event::poll(timeout)? {
-            let event = event::read()?;
-            should_run = handle_event(&mut app, &event);
-        }
-
-        if last_tick.elapsed() >= tick_duration {
-            last_tick = Instant::now();
-        }
-    }
-
-    Ok(())
-}
-
-pub fn handle_event(app: &mut App, event: &Event) -> bool {
+fn handle_event(app: &mut App, event: &Event) -> bool {
     let Event::Key(key) = event else {
         return true;
     };
@@ -204,5 +216,18 @@ pub fn handle_event(app: &mut App, event: &Event) -> bool {
             true
         }
         _ => true,
+    }
+}
+
+struct TaxBreakdown {
+    integer: u64,
+    decimal: String,
+}
+
+impl TaxBreakdown {
+    fn from(amount: f64) -> Self {
+        let integer = amount as u64;
+        let decimal = format!("{:02}", ((amount - integer as f64) * 100.0) as u64);
+        Self { integer, decimal }
     }
 }
