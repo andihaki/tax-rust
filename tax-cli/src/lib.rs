@@ -17,7 +17,7 @@ use ratatui::{
     },
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Line, Span, ToText},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
 };
 
@@ -29,8 +29,7 @@ fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
     let mut stdout = stdout();
     execute!(stdout, EnterAlternateScreen)?;
-    let terminal = Terminal::new(CrosstermBackend::new(stdout))?;
-    Ok(terminal)
+    Terminal::new(CrosstermBackend::new(stdout))
 }
 pub struct Tui {
     terminal: Terminal<CrosstermBackend<io::Stdout>>,
@@ -94,7 +93,7 @@ fn draw(frame: &mut Frame, app: &App) {
     let title_block = Block::default()
         .borders(Borders::BOTTOM)
         .style(Style::default().fg(Color::Cyan));
-    let title_text = "PJD Oleng Pajak\nInput gaji bulanan, lalu tekan Enter.".to_text();
+    let title_text = "PJD Oleng Pajak\nInput gaji bulanan, lalu tekan Enter.";
     let title_paragraph = Paragraph::new(title_text)
         .block(title_block)
         .alignment(Alignment::Center);
@@ -130,11 +129,6 @@ fn draw(frame: &mut Frame, app: &App) {
         Line::from(vec![
             Span::styled("Bulanan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                // IncomeDisplay {
-                //     app,
-                //     value: app.monthly_income,
-                // }
-                // .to_string(),
                 app.format_thousand_separator(app.monthly_income),
                 Style::default().fg(Color::LightYellow),
             ),
@@ -142,11 +136,6 @@ fn draw(frame: &mut Frame, app: &App) {
         Line::from(vec![
             Span::styled("Tahunan: ", Style::default().fg(Color::Gray)),
             Span::styled(
-                // IncomeDisplay {
-                //     app,
-                //     value: app.annual_income,
-                // }
-                // .to_string(),
                 app.format_thousand_separator(app.annual_income),
                 Style::default().fg(Color::LightYellow),
             ),
@@ -226,8 +215,9 @@ struct TaxBreakdown {
 
 impl TaxBreakdown {
     fn from(amount: f64) -> Self {
-        let integer = amount as u64;
-        let decimal = format!("{:02}", ((amount - integer as f64) * 100.0) as u64);
+        let total_cents = (amount * 100.0) as u64;
+        let integer = total_cents / 100;
+        let decimal = format!("{:02}", total_cents % 100);
         Self { integer, decimal }
     }
 }
