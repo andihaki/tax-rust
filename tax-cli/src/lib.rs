@@ -1,4 +1,4 @@
-pub mod constants;
+mod constants;
 
 use std::io::{self, stdout};
 use std::time::{Duration, Instant};
