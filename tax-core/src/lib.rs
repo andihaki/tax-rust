@@ -1,6 +1,6 @@
 pub mod constants;
 
-use std::{num::IntErrorKind, string::FromUtf8Error};
+use std::num::IntErrorKind;
 
 use crate::constants::*;
 
@@ -68,15 +68,20 @@ impl App {
         (0.0, "Error: error ape ni?")
     }
 
-    pub fn format_thousand_separator(&self, amount: u64) -> Result<String, FromUtf8Error> {
-        let components: Result<Vec<String>, FromUtf8Error> = amount
-            .to_string()
-            .as_bytes()
-            .rchunks(3)
-            .rev()
-            .map(|chunk| Ok(String::from_utf8(chunk.to_vec())?))
-            .collect();
+    pub fn format_thousand_separator(&self, amount: u64) -> String {
+        let s = amount.to_string();
+        let len = s.len();
 
-        Ok(components?.join("."))
+        s.chars()
+            .enumerate()
+            .flat_map(|(i, ch)| {
+                // Add separator after every 3 digits from the right
+                if i > 0 && (len - i).is_multiple_of(3) {
+                    vec!['.', ch]
+                } else {
+                    vec![ch]
+                }
+            })
+            .collect()
     }
 }
