@@ -1,15 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use actix_web::{HttpResponse, Responder, patch, web};
-use serde::Deserialize;
 use sqlite::Connection;
 
-#[derive(Deserialize, Debug)]
-struct User {
-    first_name: Option<String>,
-    last_name: Option<String>,
-    age: Option<i32>,
-}
+use crate::models::user::User;
 
 #[patch("/user/{id}")]
 async fn handler(
