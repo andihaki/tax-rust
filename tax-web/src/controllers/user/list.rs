@@ -22,6 +22,7 @@ async fn handler(db: web::Data<Arc<Mutex<Connection>>>) -> impl Responder {
         for &(column, value) in pairs.iter() {
             // print!("{} = {}", name, value.unwrap())
             results.push_str(&format!("{}: {}\n", column, value.unwrap_or_default()));
+            // @todo: how to dynamic key 'column'?
             // user[column] = value.unwrap_or_default();
             match column {
                 "firstName" => user.first_name = Some(value.unwrap_or_default().to_string()),
