@@ -19,6 +19,7 @@ async fn main() -> std::io::Result<()> {
             lastName TEXT, 
             age INTEGER);
         INSERT INTO users (firstName, lastName, age) VALUES ('John', 'Doe', 42);
+        INSERT INTO users (firstName, lastName, age) VALUES ('Portgas', 'Ace', 42);
     ";
     connection.execute(query).unwrap();
 
@@ -30,6 +31,7 @@ async fn main() -> std::io::Result<()> {
             // .service(controllers::api::handler())
             .service(
                 web::scope("/api")
+                    // @todo: expecting service below moved into /controllers/user.rs
                     .service(controllers::user::create::handler)
                     .service(controllers::user::delete::handler)
                     .service(controllers::user::detail::handler)
