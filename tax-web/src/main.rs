@@ -1,5 +1,10 @@
-use actix_web::{App, HttpServer, web};
+use actix_web::{
+    App, HttpServer,
+    web::{self},
+};
 use std::sync::{Arc, Mutex};
+
+use crate::controllers::user;
 
 mod controllers;
 mod models;
@@ -28,16 +33,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db_connection.clone()))
-            // .service(controllers::api::handler())
-            .service(
-                web::scope("/api")
-                    // @todo: expecting service below moved into /controllers/user.rs
-                    .service(controllers::user::create::handler)
-                    .service(controllers::user::delete::handler)
-                    .service(controllers::user::detail::handler)
-                    .service(controllers::user::list::handler)
-                    .service(controllers::user::update::handler),
-            )
+            .service(web::scope("/api").configure(user::routes::config))
     })
     .bind(("127.0.0.1", 8080))?
     .run()

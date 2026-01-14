@@ -1,5 +1,7 @@
-pub mod create;
-pub mod delete;
-pub mod detail;
-pub mod list;
-pub mod update;
+pub mod routes;
+
+mod create;
+mod delete;
+mod detail;
+mod list;
+mod update;
